@@ -1,0 +1,8 @@
+{
+  "network": "celoSepolia",
+  "chainId": 11142220,
+  "factoryAddress": "0x17C593d0Cbdb4B954e234D2184a73b86CE2051E8",
+  "deployFee": "0.5",
+  "deployer": "0x792AB2133640A784104066b7CAc1258b9FE9d496",
+  "timestamp": "2025-11-21T01:31:51.427Z"
+}

@@ -1,0 +1,8 @@
+{
+  "network": "baseSepolia",
+  "chainId": 84532,
+  "factoryAddress": "0xB5D511dD402DA6428419633e883fda21c9F8aD67",
+  "deployFee": "0.5",
+  "deployer": "0x792AB2133640A784104066b7CAc1258b9FE9d496",
+  "timestamp": "2025-11-22T15:57:54.767Z"
+}
