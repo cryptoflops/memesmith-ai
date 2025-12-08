@@ -1,6 +1,7 @@
 'use client';
 
 import { createAppKit } from '@reown/appkit/react';
+import type { AppKitNetwork } from '@reown/appkit/networks';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -27,11 +28,11 @@ const celoSepolia = {
         symbol: 'CELO',
     },
     rpcUrls: {
-        default: { http: ['https://alfajores-forno.celo-testnet.org'] },
-        public: { http: ['https://alfajores-forno.celo-testnet.org'] },
+        default: { http: ['https://forno.celo-sepolia.celo-testnet.org'] },
+        public: { http: ['https://forno.celo-sepolia.celo-testnet.org'] },
     },
     blockExplorers: {
-        default: { name: 'CeloScan', url: 'https://sepolia.celoscan.io' },
+        default: { name: 'Celo Sepolia Explorer', url: 'https://celo-sepolia.blockscout.com' },
     },
     testnet: true,
 };
@@ -40,11 +41,15 @@ const celoSepolia = {
 const queryClient = new QueryClient();
 
 // Define chains
+// Define chains
 const chains = [
     celo,
     celoSepolia,
     base,
     baseSepolia,
+    optimism,
+    optimismSepolia,
+    arbitrum,
     optimism,
     optimismSepolia,
     arbitrum,
@@ -65,7 +70,7 @@ const wagmiAdapter = new WagmiAdapter({
 createAppKit({
     adapters: [wagmiAdapter],
     projectId,
-    networks: chains as any,
+    networks: chains as unknown as [AppKitNetwork, ...AppKitNetwork[]],
     metadata: {
         name: 'MemeSmith AI',
         description: 'AI-Powered Meme Coin Factory',

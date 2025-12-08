@@ -6,18 +6,20 @@ async function main() {
   const balance = await hre.ethers.provider.getBalance(deployer.address);
 
   console.log("Deploying with account:", deployer.address);
-  console.log("Balance:", hre.ethers.formatEther(balance), "CELO");
+  const networkName = hre.network.name;
+  const symbol = (networkName === "celo" || networkName === "celoSepolia") ? "CELO" : "ETH";
+  console.log("Balance:", hre.ethers.formatEther(balance), symbol);
 
-  const Token = await hre.ethers.getContractFactory("MemeToken");
-  const token = await Token.deploy(
-    "MemeSmithToken",                   // name
-    "MEME",                             // symbol
-    hre.ethers.parseUnits("1000000", 18), // 1,000,000 supply
-    deployer.address                    // owner
-  );
+  // Deploy Factory with 0 fee initially
+  // You can set the user-facing token deployment fee later using setDeployFee()
+  const deployFee = hre.ethers.parseEther("0");
+  console.log("Deploying MemeCoinFactory with initial fee: 0");
 
-  await token.waitForDeployment();
-  console.log("Token deployed to:", await token.getAddress());
+  const Factory = await hre.ethers.getContractFactory("MemeCoinFactory");
+  const factory = await Factory.deploy(deployFee);
+
+  await factory.waitForDeployment();
+  console.log("MemeCoinFactory deployed to:", await factory.getAddress());
 }
 
 main().catch((error) => {

@@ -2,8 +2,13 @@
 
 import { useAccount, useWriteContract, useSwitchChain } from 'wagmi';
 import { parseEther } from 'viem';
-import { baseSepolia, optimismSepolia, arbitrumSepolia } from 'wagmi/chains';
-import MemeFactoryArtifact from '../artifacts/contracts/MemeCoinFactory.sol/MemeCoinFactory.json';
+import {
+  base, baseSepolia,
+  optimism, optimismSepolia,
+  arbitrum, arbitrumSepolia,
+  celo
+} from 'wagmi/chains';
+import MemeFactoryArtifact from '../lib/abis/MemeCoinFactory.json';
 
 const factoryAbi = MemeFactoryArtifact.abi;
 
@@ -14,24 +19,35 @@ const celoSepolia = {
   network: 'celo-sepolia',
   nativeCurrency: { decimals: 18, name: 'CELO', symbol: 'CELO' },
   rpcUrls: {
-    default: { http: ['https://alfajores-forno.celo-testnet.org'] },
-    public: { http: ['https://alfajores-forno.celo-testnet.org'] },
+    default: { http: ['https://forno.celo-sepolia.celo-testnet.org'] },
+    public: { http: ['https://forno.celo-sepolia.celo-testnet.org'] },
   },
   blockExplorers: {
-    default: { name: 'CeloScan', url: 'https://sepolia.celoscan.io' },
+    default: { name: 'Celo Sepolia Explorer', url: 'https://celo-sepolia.blockscout.com' },
   },
   testnet: true,
 };
 
 const CHAINS = {
+  [celo.id]: celo,
   [celoSepolia.id]: celoSepolia,
+  [base.id]: base,
   [baseSepolia.id]: baseSepolia,
+  [optimism.id]: optimism,
   [optimismSepolia.id]: optimismSepolia,
+  [arbitrum.id]: arbitrum,
   [arbitrumSepolia.id]: arbitrumSepolia,
 };
 
 // Address map for different chains
 const FACTORY_ADDRESSES: Record<number, `0x${string}`> = {
+  // Mainnets (Deployed with 0 fee - set fee using setDeployFee)
+  [celo.id]: '0xa45ca882C694e57D4Cc7eCf61C68b6d9dC5eB9dE',
+  [base.id]: '0x379248e57299dAF605B1dF921bf4A0eD2eFE2F23',
+  [optimism.id]: '0xa45ca882C694e57D4Cc7eCf61C68b6d9dC5eB9dE',
+  [arbitrum.id]: '0xB5D511dD402DA6428419633e883fda21c9F8aD67', // Old deployment - pending redeploy
+
+  // Testnets
   [celoSepolia.id]: '0x17C593d0Cbdb4B954e234D2184a73b86CE2051E8', // Celo Sepolia
   [baseSepolia.id]: '0xB5D511dD402DA6428419633e883fda21c9F8aD67', // Base Sepolia
   [optimismSepolia.id]: '0xB5D511dD402DA6428419633e883fda21c9F8aD67', // Optimism Sepolia
@@ -67,7 +83,13 @@ export function useMemeFactory(chainId: number = celoSepolia.id) {
     const pricePerTokenWei = parseEther('0.00005');
     const initialSupply = BigInt(1_000_000);
     const curveSupply = BigInt(500_000);
-    const deployFee = parseEther('0.5'); // 0.5 Native Token fee
+    // Dynamic deploy fee based on chain
+    let deployFee = parseEther('0.0001'); // Default 0.0001 ETH for L2s (Base, OP, Arb)
+
+    // Celo chains (Mainnet: 42220, Sepolia: 11142220) use 1 CELO
+    if (finalChainId === 42220 || finalChainId === 11142220) {
+      deployFee = parseEther('1');
+    }
 
     const tx = await writeContractAsync({
       address: factoryAddress,

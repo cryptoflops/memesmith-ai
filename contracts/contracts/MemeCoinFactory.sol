@@ -116,11 +116,15 @@ contract MemeCoinFactory is Ownable {
             curveSupply_
         );
 
+        // Transfer ownership of the token to the creator
+        meme.transferOwnership(msg.sender);
+
         return (id, address(meme), address(bonding));
     }
 
     function withdrawFees(address payable to) external onlyOwner {
         require(to != address(0), "zero address");
-        to.transfer(address(this).balance);
+        (bool success, ) = to.call{value: address(this).balance}("");
+        require(success, "Transfer failed");
     }
 }

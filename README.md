@@ -1,152 +1,155 @@
-# MemeSmith AI
+# MemeSmith AI 🧪
 
-AI-powered meme coin factory that analyzes Farcaster profiles to generate and deploy personalized tokens on multiple EVM chains.
+> Forge your Farcaster identity into a personalized meme coin with AI
 
-## 🚀 Features
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://memesmith-ai.vercel.app)
+[![Farcaster Mini App](https://img.shields.io/badge/Farcaster-Mini%20App-purple)](https://warpcast.com)
+[![Built on Celo](https://img.shields.io/badge/Built%20on-Celo-fcff52)](https://celo.org)
 
-- **AI Profile Analysis**: Analyzes Farcaster profiles using GaiaNet AI
-- **Token Generation**: Creates unique meme coins based on user identity
-- **Multi-Chain Support**: Deploy on Celo, Base, Optimism, and Arbitrum
-- **Farcaster Integration**: Full Farcaster Mini App with safe area support
-- **Web3 Wallet**: Reown AppKit (WalletConnect v2) integration
+![MemeSmith AI Banner](https://via.placeholder.com/1200x400/000000/39FF14?text=MemeSmith+AI)
 
-## 📁 Project Structure
+## ✨ Features
+
+- **🤖 AI-Powered Analysis** - Analyzes your Farcaster profile (bio, casts, followers) to understand your online persona
+- **🎨 Generative Art** - Creates unique token logos using AI image generation
+- **⛓️ Multi-Chain Deployment** - Deploy your meme coin on Celo, Base, Optimism, or Arbitrum
+- **📱 Farcaster Native** - Built as a Farcaster Mini App with seamless wallet integration
+- **💰 Built-in Bonding Curve** - Tokens launch with a built-in bonding curve for fair price discovery
+
+## 🏗️ Architecture
 
 ```
 memesmith/
-├── contracts/         # Hardhat smart contracts
-│   ├── contracts/     # Solidity contracts
-│   ├── scripts/       # Deployment scripts
-│   └── deployments/   # Deployed contract addresses
-└── frontend/          # Next.js frontend
-    ├── components/    # React components
-    ├── hooks/         # Custom React hooks
-    ├── pages/         # Next.js pages & API routes
-    └── public/        # Static assets & Farcaster manifest
+├── frontend/          # Next.js 14 + Reown AppKit
+│   ├── components/    # React components
+│   ├── hooks/         # Custom hooks (useMemeFactory)
+│   ├── pages/
+│   │   ├── api/       # API routes
+│   │   │   ├── analyze-profile.ts  # Profile analysis + AI
+│   │   │   ├── generate-asset.ts   # Image generation
+│   │   │   └── gaia.ts             # GaiaNet AI endpoint
+│   │   └── index.tsx  # Main app
+│   └── public/        # Static assets + farcaster.json
+│
+└── contracts/         # Hardhat + Solidity
+    ├── contracts/
+    │   ├── MemeCoinFactory.sol    # Factory contract
+    │   ├── MemeCoin.sol           # ERC20 token template
+    │   └── MemeBondingCurve.sol   # Bonding curve logic
+    └── scripts/       # Deployment scripts
 ```
 
-## 🛠️ Tech Stack
-
-### Frontend
-- **Framework**: Next.js 14
-- **Styling**: Tailwind CSS
-- **Web3**: Wagmi v2, Viem, Reown AppKit
-- **Farcaster**: @farcaster/miniapp-sdk
-
-### Smart Contracts
-- **Framework**: Hardhat
-- **Language**: Solidity ^0.8.20
-- **Networks**: Celo, Base, Optimism, Arbitrum
-
-### AI & APIs
-- **AI**: GaiaNet (OpenAI-compatible)
-- **Image Generation**: OpenAI DALL-E
-- **Storage**: Pinata (IPFS)
-
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
 - npm or yarn
-- MetaMask or compatible Web3 wallet
+- A wallet with testnet tokens (for deployment)
 
-### Installation
+### Frontend
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd memesmith
-   ```
-
-2. **Install dependencies**
-   ```bash
-   # Install root dependencies
-   npm install
-
-   # Install frontend dependencies
-   cd frontend
-   npm install
-
-   # Install contract dependencies
-   cd ../contracts
-   npm install
-   ```
-
-3. **Configure environment variables**
-
-   **Frontend** (`frontend/.env.local`):
-   ```env
-   NEXT_PUBLIC_WC_PROJECT_ID=your_walletconnect_project_id
-   NEXT_PUBLIC_MEME_FACTORY_ADDRESS=deployed_factory_address
-   OPENAI_API_KEY=your_openai_api_key
-   PINATA_JWT=your_pinata_jwt
-   ```
-
-   **Contracts** (`contracts/.env`):
-   ```env
-   PRIVATE_KEY=your_deployer_private_key
-   CELO_RPC_URL=https://alfajores-forno.celo-testnet.org
-   BASE_RPC_URL=https://sepolia.base.org
-   OPTIMISM_RPC_URL=https://sepolia.optimism.io
-   ARBITRUM_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
-   ```
-
-### Development
-
-**Run frontend dev server:**
 ```bash
 cd frontend
+npm install
+cp .env.example .env.local
+# Add your API keys to .env.local
 npm run dev
 ```
 
-**Deploy contracts:**
+### Smart Contracts
+
 ```bash
 cd contracts
+npm install
+cp .env.example .env
+# Add your PRIVATE_KEY to .env
+npx hardhat compile
 npx hardhat run scripts/deploy.js --network celoSepolia
 ```
 
-## 📝 Smart Contracts
+## 🔧 Environment Variables
 
-### MemeCoinFactory
-Main factory contract for deploying meme coins with bonding curve mechanics.
+### Frontend (`.env.local`)
 
-**Deployed Addresses:**
-- Celo Sepolia: `[address from deployments]`
-- Base Sepolia: `[address from deployments]`
-- Optimism Sepolia: `[address from deployments]`
-- Arbitrum Sepolia: `[address from deployments]`
+```env
+# WalletConnect / Reown AppKit
+NEXT_PUBLIC_WC_PROJECT_ID=your_walletconnect_project_id
 
-## 🌐 Deployment
+# Farcaster Profile Data (Free tier: 300 req/min)
+NEYNAR_API_KEY=your_neynar_api_key
 
-### Vercel Deployment
+# AI Text Generation - GaiaNet (Free, decentralized)
+GAIANET_API_URL=https://llama.gaia.domains/v1
 
-The frontend is deployed on Vercel with automatic builds from the main branch.
+# AI Image Generation - Hugging Face (Optional)
+HUGGINGFACE_API_KEY=your_huggingface_api_key
+```
 
-**Live URL**: https://memesmith-4xr281jf2-cryptoflops00-3036s-projects.vercel.app
+### Contracts (`.env`)
 
-### Farcaster Mini App
+```env
+PRIVATE_KEY=your_wallet_private_key
+ETHERSCAN_API_KEY=your_etherscan_v2_api_key
+```
 
-The app is configured as a Farcaster Mini App with:
-- Manifest at `/.well-known/farcaster.json`
-- Webhook endpoint at `/api/webhook`
-- Safe area inset support
-- Share and Add to Home functionality
+## 🌐 Deployed Contracts
 
-## 🔐 Security
+| Network | Factory Address | Explorer |
+|---------|-----------------|----------|
+| Celo Mainnet | `0xa45ca882C694e57D4Cc7eCf61C68b6d9dC5eB9dE` | [CeloScan](https://celoscan.io/address/0xa45ca882C694e57D4Cc7eCf61C68b6d9dC5eB9dE) |
+| Base Mainnet | `0x379248e57299dAF605B1dF921bf4A0eD2eFE2F23` | [BaseScan](https://basescan.org/address/0x379248e57299dAF605B1dF921bf4A0eD2eFE2F23) |
+| Optimism | `0xa45ca882C694e57D4Cc7eCf61C68b6d9dC5eB9dE` | [OP Etherscan](https://optimistic.etherscan.io/address/0xa45ca882C694e57D4Cc7eCf61C68b6d9dC5eB9dE) |
+| Arbitrum One | `0xB5D511dD402DA6428419633e883fda21c9F8aD67` | [Arbiscan](https://arbiscan.io/address/0xB5D511dD402DA6428419633e883fda21c9F8aD67) |
 
-- Private keys stored in `.env` files (never committed)
-- Webhook signature verification (to be implemented)
-- Smart contract auditing recommended before mainnet
+## 💸 Deployment Fees
+
+| Network | Fee |
+|---------|-----|
+| Celo | 1 CELO |
+| Base | 0.0001 ETH |
+| Optimism | 0.0001 ETH |
+| Arbitrum | 0.0001 ETH |
+
+## 🛡️ Security
+
+- All smart contracts are verified on block explorers
+- Implements reentrancy protection
+- Safe withdrawal pattern using `.call()` instead of `.transfer()`
+- Ownership transferred to creator on token deployment
+- Integral-based bonding curve for fair pricing
+
+## 🔌 Tech Stack
+
+- **Frontend**: Next.js 14, React 18, Tailwind CSS
+- **Wallet**: Reown AppKit, wagmi v2, viem
+- **AI**: GaiaNet (text), Pollinations.ai / Hugging Face (images)
+- **Data**: Neynar API for Farcaster profiles
+- **Blockchain**: Solidity 0.8.20, Hardhat, OpenZeppelin
+- **Hosting**: Vercel
+
+## 📱 Farcaster Integration
+
+MemeSmith AI is built as a Farcaster Mini App. To add it to your client:
+
+1. Open Warpcast or compatible Farcaster client
+2. Navigate to the app URL
+3. Click "Add to Home" to install
+
+The app implements:
+- `fc:miniapp` meta tags
+- Safe area handling for mobile
+- Cast composer integration
+- Native wallet connection
 
 ## 📄 License
 
-MIT
+MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🤝 Contributing
 
-Contributions welcome! Please open an issue or PR.
+Contributions are welcome! Please open an issue or submit a pull request.
 
-## 📧 Contact
+---
 
-For questions or support, please open an issue on GitHub.
+**Built with 💚 for the Celo and Farcaster communities**

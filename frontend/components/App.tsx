@@ -16,7 +16,6 @@ export default function App() {
     const [isSDKLoaded, setIsSDKLoaded] = useState(false);
     const [context, setContext] = useState<any | undefined>();
     const [step, setStep] = useState<'auth' | 'analyze' | 'review' | 'art' | 'deploy' | 'success'>('auth');
-    // Using context?.client?.safeAreaInsets; removed duplicate state
 
     // AI State
     const [idea, setIdea] = useState<MemeIdea | null>(null);
@@ -24,18 +23,16 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Chain State - Celo Sepolia chain ID
-    const [selectedChain, setSelectedChain] = useState<number>(11142220); // Celo Sepolia
+    // Chain State - Default to Celo Mainnet
+    const [selectedChain, setSelectedChain] = useState<number>(42220); // Celo Mainnet
     const { launchMemeFromIdea } = useMemeFactory();
     const { isConnected } = useAccount();
     const [txHash, setTxHash] = useState<string | null>(null);
 
     useEffect(() => {
         const load = async () => {
-            const ctx = await sdk.context;
-            setContext(ctx);
-            // Retrieve safe area insets from the SDK (if available)
-            // Removed SDK getSafeAreaInsets call; using context?.client?.safeAreaInsets instead
+            const context = await sdk.context;
+            setContext(context);
             sdk.actions.ready();
         };
         if (sdk && !isSDKLoaded) {
@@ -103,17 +100,24 @@ export default function App() {
         }
     };
 
+    const getExplorerUrl = (hash: string) => {
+        switch (selectedChain) {
+            case 42220: return `https://celoscan.io/tx/${hash}`;
+            case 8453: return `https://basescan.org/tx/${hash}`;
+            case 10: return `https://optimistic.etherscan.io/tx/${hash}`;
+            case 42161: return `https://arbiscan.io/tx/${hash}`;
+            case 11142220: return `https://sepolia.celoscan.io/tx/${hash}`;
+            case 84532: return `https://sepolia.basescan.org/tx/${hash}`;
+            case 11155420: return `https://sepolia-optimism.etherscan.io/tx/${hash}`;
+            case 421614: return `https://sepolia.arbiscan.io/tx/${hash}`;
+            default: return `https://celoscan.io/tx/${hash}`;
+        }
+    };
+
     if (!isSDKLoaded) return <div className="flex items-center justify-center h-screen">Loading Farcaster SDK...</div>;
 
-    const safeAreaInsets = context?.client?.safeAreaInsets;
-
     return (
-        <div className="min-h-screen bg-black text-white font-mono p-4" style={{
-            paddingTop: safeAreaInsets?.top ? `${safeAreaInsets.top}px` : '1rem',
-            paddingBottom: safeAreaInsets?.bottom ? `${safeAreaInsets.bottom}px` : '1rem',
-            paddingLeft: safeAreaInsets?.left ? `${safeAreaInsets.left}px` : '1rem',
-            paddingRight: safeAreaInsets?.right ? `${safeAreaInsets.right}px` : '1rem',
-        }}>
+        <div className="min-h-screen bg-black text-white font-mono p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
             <div className="max-w-md mx-auto space-y-8">
                 <header className="text-center space-y-2">
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-green to-cyan-400 bg-clip-text text-transparent animate-pulse">
@@ -127,7 +131,7 @@ export default function App() {
                         <div className="text-center space-y-6">
                             <div className="p-6 border border-neon-green/30 rounded-lg bg-gray-900/50 backdrop-blur">
                                 <p className="text-lg mb-4">
-                                    Ready create your own profile coin?
+                                    Ready to immortalize your Farcaster profile on-chain?
                                 </p>
                                 <button
                                     onClick={handleAnalyze}
@@ -192,10 +196,18 @@ export default function App() {
                                     onChange={(e) => setSelectedChain(Number(e.target.value))}
                                     className="w-full p-3 bg-black border border-gray-600 rounded text-white mb-4"
                                 >
-                                    <option value={11142220}>Celo Sepolia</option>
-                                    <option value={84532}>Base Sepolia</option>
-                                    <option value={11155420}>Optimism Sepolia</option>
-                                    <option value={421614}>Arbitrum Sepolia</option>
+                                    <optgroup label="Mainnet">
+                                        <option value={42220}>Celo Mainnet</option>
+                                        <option value={8453}>Base Mainnet</option>
+                                        <option value={10}>Optimism Mainnet</option>
+                                        <option value={42161}>Arbitrum One</option>
+                                    </optgroup>
+                                    <optgroup label="Testnet">
+                                        <option value={11142220}>Celo Sepolia</option>
+                                        <option value={84532}>Base Sepolia</option>
+                                        <option value={11155420}>Optimism Sepolia</option>
+                                        <option value={421614}>Arbitrum Sepolia</option>
+                                    </optgroup>
                                 </select>
                             </div>
 
@@ -207,46 +219,51 @@ export default function App() {
                                     disabled={isLoading}
                                     className="w-full py-4 bg-neon-green text-black font-bold rounded hover:bg-green-400"
                                 >
-                                    {isLoading ? 'Deploying...' : `DEPLOY TOKEN (0.5 ETH/CELO)`}
+                                    {isLoading ? 'Deploying...' : `DEPLOY TOKEN (${(selectedChain === 42220 || selectedChain === 11142220) ? '1 CELO' : '0.0001 ETH'})`}
                                 </button>
-                            )}
-                        </div>
+                            )
+                            }
+                        </div >
                     )}
 
-                    {step === 'success' && (
-                        <div className="text-center space-y-6 animate-fade-in">
-                            <div className="text-6xl">🎉</div>
-                            <h2 className="text-3xl font-bold text-neon-green">Token Deployed!</h2>
-                            <div className="p-4 bg-gray-900 rounded break-all font-mono text-xs border border-gray-700">
-                                Tx: {txHash}
+                    {
+                        step === 'success' && (
+                            <div className="text-center space-y-6 animate-fade-in">
+                                <div className="text-6xl">🎉</div>
+                                <h2 className="text-3xl font-bold text-neon-green">Token Deployed!</h2>
+                                <div className="p-4 bg-gray-900 rounded break-all font-mono text-xs border border-gray-700">
+                                    Tx: {txHash}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        onClick={() => sdk.actions.openUrl(getExplorerUrl(txHash!))}
+                                        className="py-3 bg-gray-800 rounded hover:bg-gray-700"
+                                    >
+                                        View on Explorer
+                                    </button>
+                                    <button
+                                        onClick={() => sdk.actions.composeCast({
+                                            text: `I just forged $${idea?.symbol} on MemeSmith AI! 🚀\n\nCheck it out: https://memesmith-ai.vercel.app\n\nTx:`,
+                                            embeds: [getExplorerUrl(txHash!)]
+                                        })}
+                                        className="py-3 bg-purple-600 text-white rounded hover:bg-purple-500"
+                                    >
+                                        Share on Farcaster
+                                    </button>
+                                </div>
                             </div>
+                        )
+                    }
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <button
-                                    onClick={() => sdk.actions.openUrl(`https://sepolia.celoscan.io/tx/${txHash}`)}
-                                    className="py-3 bg-gray-800 rounded hover:bg-gray-700"
-                                >
-                                    View on Explorer
-                                </button>
-                                <button
-                                    onClick={() => sdk.actions.composeCast({
-                                        text: `I just forged $${idea?.symbol} on MemeSmith AI! ⚒️\n\nCheck it out:`,
-                                        embeds: [`https://sepolia.celoscan.io/tx/${txHash}`]
-                                    })}
-                                    className="py-3 bg-purple-600 text-white rounded hover:bg-purple-500"
-                                >
-                                    Share on Farcaster
-                                </button>
+                    {
+                        error && (
+                            <div className="p-4 bg-red-900/50 border border-red-500 rounded text-red-200 text-sm">
+                                {error}
                             </div>
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="p-4 bg-red-900/50 border border-red-500 rounded text-red-200 text-sm">
-                            {error}
-                        </div>
-                    )}
-                </main>
+                        )
+                    }
+                </main >
 
                 <footer className="text-center text-xs text-gray-600 pt-8 space-y-4">
                     <p>Powered by GaiaNet & Celo</p>
@@ -265,7 +282,7 @@ export default function App() {
                         </button>
                     </div>
                 </footer>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
