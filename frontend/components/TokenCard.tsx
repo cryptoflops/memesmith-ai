@@ -1,0 +1,56 @@
+'use client';
+
+import { FC } from 'react';
+import { motion } from 'framer-motion';
+import { useMemePrice } from '../hooks/useMemes';
+import { Zap } from 'lucide-react';
+
+interface TokenCardProps {
+    name: string;
+    symbol: string;
+    curveAddress?: `0x${string}`;
+    imageUrl?: string;
+    onClick?: () => void;
+}
+
+export const TokenCard: FC<TokenCardProps> = ({ name, symbol, curveAddress, imageUrl, onClick }) => {
+    const { price } = useMemePrice(curveAddress);
+
+    return (
+        <motion.div
+            whileHover={{ y: -5, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onClick}
+            className="glass-card overflow-hidden cursor-pointer group"
+        >
+            <div className="aspect-square relative overflow-hidden bg-white/5">
+                {imageUrl ? (
+                    <img src={imageUrl} alt={name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center opacity-20">
+                        <Zap size={48} />
+                    </div>
+                )}
+                <div className="absolute top-2 right-2 glass-card-sm px-2 py-1 flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-neon-green shadow-green" />
+                    <span className="text-[10px] font-bold text-white/70">LIVE</span>
+                </div>
+            </div>
+
+            <div className="p-3">
+                <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-display text-sm truncate max-w-[70%]">{name}</h3>
+                    <span className="text-neon-yellow text-[10px] font-black tracking-tighter">${symbol}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <div className="text-[10px] opacity-40 font-mono text-white/50">PRICE</div>
+                    <div className="text-xs font-mono font-bold text-neon-blue">
+                        {price ? `${price.toFixed(6)} CELO` : '0.00...'}
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+export default TokenCard;

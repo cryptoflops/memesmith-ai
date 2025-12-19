@@ -1,9 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import sdk from '@farcaster/miniapp-sdk';
 import { useAccount } from 'wagmi';
 import { useMemeFactory } from '../hooks/useMemeFactory';
+import { useMemes } from '../hooks/useMemes';
+import { BottomNav } from './BottomNav';
+import { StatCard } from './StatCard';
+import { TokenCard } from './TokenCard';
+import { ActionCard } from './ActionCard';
+import { FilterChips } from './FilterChips';
+import { TokenDetail } from './TokenDetail';
+import { AuroraBackground } from './AuroraBackground';
+import { MemeMetadata } from '../hooks/useMemes';
+import { AnimatePresence, motion } from 'framer-motion';
+import { LayoutGrid, PlusSquare, User, TrendingUp, Zap, Sparkles } from 'lucide-react';
 
 type MemeIdea = {
     name: string;
@@ -12,10 +22,14 @@ type MemeIdea = {
     logoPrompt: string;
 };
 
+type Screen = 'home' | 'create' | 'gallery' | 'profile';
+
 export default function App() {
     const [isSDKLoaded, setIsSDKLoaded] = useState(false);
     const [context, setContext] = useState<any | undefined>();
-    const [step, setStep] = useState<'auth' | 'analyze' | 'review' | 'art' | 'deploy' | 'success'>('auth');
+    const [activeScreen, setActiveScreen] = useState<Screen>('home');
+    const [createStep, setCreateStep] = useState<'start' | 'review' | 'art' | 'deploy' | 'success'>('start');
+    const [selectedMeme, setSelectedMeme] = useState<MemeMetadata | null>(null);
 
     // AI State
     const [idea, setIdea] = useState<MemeIdea | null>(null);
@@ -23,23 +37,55 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Chain State - Default to Celo Mainnet
-    const [selectedChain, setSelectedChain] = useState<number>(42220); // Celo Mainnet
-    const { launchMemeFromIdea } = useMemeFactory();
-    const { isConnected } = useAccount();
+    // Chain State
+    const [selectedChain, setSelectedChain] = useState<number>(11142220); // Default to Celo Sepolia
+    const { launchMemeFromIdea } = useMemeFactory(selectedChain);
+    const { memes, isLoading: isLoadingMemes, count } = useMemes(selectedChain);
+    const { isConnected, address } = useAccount();
     const [txHash, setTxHash] = useState<string | null>(null);
 
+    // Gallery filters
+    const [activeFilter, setActiveFilter] = useState('Trending');
+    const filterOptions = ['Trending', 'New', 'My Coins'];
+
+    // SDK reference for actions
+    const [sdk, setSdk] = useState<any>(null);
+
+    // Initialize Farcaster SDK on mount with dynamic import
     useEffect(() => {
-        const load = async () => {
-            const context = await sdk.context;
-            setContext(context);
-            sdk.actions.ready();
+        const initFarcaster = async () => {
+            try {
+                // Dynamic import - only runs on client
+                const farcasterSdk = await import('@farcaster/miniapp-sdk');
+                const sdkInstance = farcasterSdk.default || farcasterSdk;
+                setSdk(sdkInstance);
+
+                console.log('[MemeSmith] SDK imported successfully');
+
+                // Get context
+                try {
+                    const ctx = await sdkInstance.context;
+                    setContext(ctx);
+                    console.log('[MemeSmith] Context:', ctx);
+                } catch (e) {
+                    console.log('[MemeSmith] No context available');
+                }
+
+                // Call ready() to dismiss splash screen
+                if (sdkInstance.actions && sdkInstance.actions.ready) {
+                    sdkInstance.actions.ready();
+                    console.log('[MemeSmith] ready() called');
+                }
+
+                setIsSDKLoaded(true);
+            } catch (e) {
+                console.error('[MemeSmith] SDK init failed:', e);
+                setIsSDKLoaded(true); // Still render app
+            }
         };
-        if (sdk && !isSDKLoaded) {
-            setIsSDKLoaded(true);
-            load();
-        }
-    }, [isSDKLoaded]);
+
+        initFarcaster();
+    }, []);
 
     const handleAnalyze = async () => {
         setIsLoading(true);
@@ -50,14 +96,13 @@ export default function App() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     fid: context?.user?.fid,
-                    // If no FID (local dev), use a prompt
                     prompt: !context?.user?.fid ? "Create a meme coin for a crypto developer" : undefined
                 }),
             });
             const data = await res.json();
             if (data.error) throw new Error(data.error);
             setIdea(data);
-            setStep('review');
+            setCreateStep('review');
         } catch (e: any) {
             setError(e.message);
         } finally {
@@ -77,7 +122,7 @@ export default function App() {
             const data = await res.json();
             if (data.error) throw new Error(data.error);
             setImageUrl(data.imageUrl);
-            setStep('deploy');
+            setCreateStep('deploy');
         } catch (e: any) {
             setError(e.message);
         } finally {
@@ -92,7 +137,7 @@ export default function App() {
         try {
             const result = await launchMemeFromIdea(idea, selectedChain);
             setTxHash(result?.hash || null);
-            setStep('success');
+            setCreateStep('success');
         } catch (e: any) {
             setError(e.message);
         } finally {
@@ -106,183 +151,253 @@ export default function App() {
             case 8453: return `https://basescan.org/tx/${hash}`;
             case 10: return `https://optimistic.etherscan.io/tx/${hash}`;
             case 42161: return `https://arbiscan.io/tx/${hash}`;
-            case 11142220: return `https://sepolia.celoscan.io/tx/${hash}`;
-            case 84532: return `https://sepolia.basescan.org/tx/${hash}`;
-            case 11155420: return `https://sepolia-optimism.etherscan.io/tx/${hash}`;
-            case 421614: return `https://sepolia.arbiscan.io/tx/${hash}`;
             default: return `https://celoscan.io/tx/${hash}`;
         }
     };
 
-    if (!isSDKLoaded) return <div className="flex items-center justify-center h-screen">Loading Farcaster SDK...</div>;
+    const getChainName = (chainId: number) => {
+        switch (chainId) {
+            case 42220: return 'Celo';
+            case 8453: return 'Base';
+            case 10: return 'Optimism';
+            case 42161: return 'Arbitrum';
+            default: return 'Chain';
+        }
+    };
+
+    if (!isSDKLoaded) {
+        return (
+            <div className="safe-container flex items-center justify-center">
+                <div className="text-center">
+                    <div className="text-4xl mb-4 animate-pulse">⚡</div>
+                    <p className="text-label">Loading MemeSmith AI...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-black text-white font-mono p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-            <div className="max-w-md mx-auto space-y-8">
-                <header className="text-center space-y-2">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-green to-cyan-400 bg-clip-text text-transparent animate-pulse">
-                        MEMESMITH AI
-                    </h1>
-                    <p className="text-gray-400 text-sm">FORGE YOUR SOCIAL IDENTITY</p>
-                </header>
+        <main className="min-h-screen relative overflow-x-hidden">
+            <AuroraBackground />
 
-                <main>
-                    {step === 'auth' && (
-                        <div className="text-center space-y-6">
-                            <div className="p-6 border border-neon-green/30 rounded-lg bg-gray-900/50 backdrop-blur">
-                                <p className="text-lg mb-4">
-                                    Ready to immortalize your Farcaster profile on-chain?
-                                </p>
-                                <button
-                                    onClick={handleAnalyze}
-                                    disabled={isLoading}
-                                    className="w-full py-4 bg-neon-green text-black font-bold rounded hover:bg-green-400 transition-all transform hover:scale-105"
-                                >
-                                    {isLoading ? 'ANALYZING PROFILE...' : 'FORGE MY COIN'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 'review' && idea && (
-                        <div className="space-y-6 animate-fade-in">
-                            <div className="p-6 border border-neon-green rounded-lg bg-gray-900">
-                                <h2 className="text-2xl font-bold text-neon-green mb-2">{idea.name}</h2>
-                                <div className="flex items-center space-x-2 mb-4">
-                                    <span className="px-3 py-1 bg-neon-green text-black font-bold rounded text-sm">
-                                        ${idea.symbol}
-                                    </span>
+            <div className="safe-container">
+                <AnimatePresence mode="wait">
+                    {/* ===== HOME SCREEN ===== */}
+                    {activeScreen === 'home' && !selectedMeme && (
+                        <motion.div
+                            key="home"
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.98 }}
+                            transition={{ duration: 0.3 }}
+                            className="space-y-8"
+                        >
+                            <header className="py-6 flex justify-between items-center">
+                                <div>
+                                    <h1 className="text-display text-4xl mb-1">MemeSmith</h1>
+                                    <p className="text-sm opacity-50 font-medium tracking-wide uppercase">Forge Your Identity</p>
                                 </div>
-                                <p className="text-gray-300 italic">"{idea.description}"</p>
-                            </div>
-                            <div className="flex space-x-4">
-                                <button
-                                    onClick={() => setStep('auth')}
-                                    className="flex-1 py-3 border border-gray-600 rounded hover:bg-gray-800"
-                                >
-                                    REGENERATE
-                                </button>
-                                <button
-                                    onClick={handleGenerateArt}
-                                    disabled={isLoading}
-                                    className="flex-1 py-3 bg-neon-green text-black font-bold rounded hover:bg-green-400"
-                                >
-                                    {isLoading ? 'GENERATING...' : 'GENERATE LOGO'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 'art' && imageUrl && (
-                        <div className="space-y-6 animate-fade-in">
-                            <div className="aspect-square relative rounded-lg overflow-hidden border-2 border-neon-green shadow-[0_0_20px_rgba(57,255,20,0.3)]">
-                                <img src={imageUrl} alt="Token Logo" className="w-full h-full object-cover" />
-                            </div>
-                            <button
-                                onClick={() => setStep('deploy')}
-                                className="w-full py-4 bg-neon-green text-black font-bold rounded hover:bg-green-400"
-                            >
-                                PROCEED TO DEPLOYMENT
-                            </button>
-                        </div>
-                    )}
-
-                    {step === 'deploy' && (
-                        <div className="space-y-6 animate-fade-in">
-                            <div className="p-4 bg-gray-900 rounded-lg border border-gray-700">
-                                <h3 className="text-lg font-bold mb-4 text-gray-300">Select Network</h3>
-                                <select
-                                    value={selectedChain}
-                                    onChange={(e) => setSelectedChain(Number(e.target.value))}
-                                    className="w-full p-3 bg-black border border-gray-600 rounded text-white mb-4"
-                                >
-                                    <optgroup label="Mainnet">
-                                        <option value={42220}>Celo Mainnet</option>
-                                        <option value={8453}>Base Mainnet</option>
-                                        <option value={10}>Optimism Mainnet</option>
-                                        <option value={42161}>Arbitrum One</option>
-                                    </optgroup>
-                                    <optgroup label="Testnet">
-                                        <option value={11142220}>Celo Sepolia</option>
-                                        <option value={84532}>Base Sepolia</option>
-                                        <option value={11155420}>Optimism Sepolia</option>
-                                        <option value={421614}>Arbitrum Sepolia</option>
-                                    </optgroup>
-                                </select>
-                            </div>
-
-                            {!isConnected ? (
-                                <appkit-button />
-                            ) : (
-                                <button
-                                    onClick={handleDeploy}
-                                    disabled={isLoading}
-                                    className="w-full py-4 bg-neon-green text-black font-bold rounded hover:bg-green-400"
-                                >
-                                    {isLoading ? 'Deploying...' : `DEPLOY TOKEN (${(selectedChain === 42220 || selectedChain === 11142220) ? '1 CELO' : '0.0001 ETH'})`}
-                                </button>
-                            )
-                            }
-                        </div >
-                    )}
-
-                    {
-                        step === 'success' && (
-                            <div className="text-center space-y-6 animate-fade-in">
-                                <div className="text-6xl">🎉</div>
-                                <h2 className="text-3xl font-bold text-neon-green">Token Deployed!</h2>
-                                <div className="p-4 bg-gray-900 rounded break-all font-mono text-xs border border-gray-700">
-                                    Tx: {txHash}
+                                <div className="glass-card p-2 px-4 flex items-center gap-2">
+                                    <Sparkles size={16} className="text-neon-yellow" />
+                                    <span className="text-xs font-bold tracking-tighter">AI READY</span>
                                 </div>
+                            </header>
 
+                            <section className="grid grid-cols-2 gap-4">
+                                <StatCard
+                                    icon={<TrendingUp size={20} />}
+                                    label="Coins Created"
+                                    value={count.toString()}
+                                    color="yellow"
+                                />
+                                <StatCard
+                                    icon={<Zap size={20} />}
+                                    label="Network"
+                                    value="Celo"
+                                    color="green"
+                                />
+                            </section>
+
+                            <section>
+                                <div className="flex justify-between items-end mb-4">
+                                    <h2 className="text-title text-xl">Quick Actions</h2>
+                                </div>
+                                <div className="grid gap-4">
+                                    <ActionCard
+                                        icon={<PlusSquare />}
+                                        title="Create Meme"
+                                        description="AI analysis from your profile"
+                                        color="yellow"
+                                        onClick={() => setActiveScreen('create')}
+                                    />
+                                    <ActionCard
+                                        icon={<LayoutGrid />}
+                                        title="Browse Gallery"
+                                        description="Latest tokens on Celo"
+                                        color="green"
+                                        onClick={() => setActiveScreen('gallery')}
+                                    />
+                                </div>
+                            </section>
+
+                            <section>
+                                <div className="flex justify-between items-end mb-4">
+                                    <h2 className="text-title text-xl">Trending Forge</h2>
+                                    <button
+                                        className="text-xs font-bold text-neon-yellow uppercase tracking-widest"
+                                        onClick={() => setActiveScreen('gallery')}
+                                    >
+                                        View All
+                                    </button>
+                                </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <button
-                                        onClick={() => sdk.actions.openUrl(getExplorerUrl(txHash!))}
-                                        className="py-3 bg-gray-800 rounded hover:bg-gray-700"
-                                    >
-                                        View on Explorer
-                                    </button>
-                                    <button
-                                        onClick={() => sdk.actions.composeCast({
-                                            text: `I just forged $${idea?.symbol} on MemeSmith AI! 🚀\n\nCheck it out: https://memesmith-ai.vercel.app\n\nTx:`,
-                                            embeds: [getExplorerUrl(txHash!)]
-                                        })}
-                                        className="py-3 bg-purple-600 text-white rounded hover:bg-purple-500"
-                                    >
-                                        Share on Farcaster
-                                    </button>
+                                    {isLoadingMemes ? (
+                                        Array.from({ length: 4 }).map((_, i) => (
+                                            <div key={i} className="aspect-square glass-card animate-pulse" />
+                                        ))
+                                    ) : memes.length === 0 ? (
+                                        <div className="col-span-2 text-center py-12 glass-card opacity-30">No tokens forged yet</div>
+                                    ) : (
+                                        memes.slice(0, 4).map((meme) => (
+                                            <TokenCard
+                                                key={meme.token}
+                                                name={meme.name}
+                                                symbol={meme.symbol}
+                                                curveAddress={meme.curve}
+                                                onClick={() => {
+                                                    setSelectedMeme(meme);
+                                                }}
+                                            />
+                                        ))
+                                    )}
                                 </div>
-                            </div>
-                        )
-                    }
+                            </section>
+                        </motion.div>
+                    )}
 
-                    {
-                        error && (
-                            <div className="p-4 bg-red-900/50 border border-red-500 rounded text-red-200 text-sm">
-                                {error}
-                            </div>
-                        )
-                    }
-                </main >
+                    {/* ===== TOKEN DETAIL OVERLAY ===== */}
+                    {selectedMeme && (
+                        <motion.div
+                            key="detail"
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 50 }}
+                            className="fixed inset-0 z-[110] bg-black/95 safe-container overflow-y-auto"
+                        >
+                            <TokenDetail
+                                token={selectedMeme}
+                                onBack={() => setSelectedMeme(null)}
+                            />
+                        </motion.div>
+                    )}
 
-                <footer className="text-center text-xs text-gray-600 pt-8 space-y-4">
-                    <p>Powered by GaiaNet & Celo</p>
-                    <div className="flex justify-center space-x-4">
-                        <button
-                            onClick={() => sdk.actions.addMiniApp()}
-                            className="text-neon-green hover:underline"
+                    {/* ===== GALLERY SCREEN ===== */}
+                    {activeScreen === 'gallery' && !selectedMeme && (
+                        <motion.div
+                            key="gallery"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="space-y-6"
                         >
-                            Add to Home
-                        </button>
-                        <button
-                            onClick={() => sdk.actions.close()}
-                            className="text-gray-500 hover:text-white"
+                            <header className="py-6">
+                                <h1 className="text-display text-4xl">Gallery</h1>
+                                <p className="text-sm opacity-50 font-medium tracking-wide uppercase">All forged memecoins</p>
+                            </header>
+
+                            <FilterChips
+                                options={filterOptions}
+                                activeOption={activeFilter}
+                                onChange={setActiveFilter}
+                            />
+
+                            <div className="grid grid-cols-2 gap-4">
+                                {isLoadingMemes ? (
+                                    Array.from({ length: 6 }).map((_, i) => (
+                                        <div key={i} className="aspect-square glass-card animate-pulse" />
+                                    ))
+                                ) : (
+                                    memes.map((meme) => (
+                                        <TokenCard
+                                            key={meme.token}
+                                            name={meme.name}
+                                            symbol={meme.symbol}
+                                            curveAddress={meme.curve}
+                                            onClick={() => setSelectedMeme(meme)}
+                                        />
+                                    ))
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* ===== PROFILE SCREEN ===== */}
+                    {activeScreen === 'profile' && !selectedMeme && (
+                        <motion.div
+                            key="profile"
+                            initial={{ opacity: 0, scale: 1.1 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="space-y-8"
                         >
-                            Close
-                        </button>
-                    </div>
-                </footer>
-            </div >
-        </div >
+                            <div className="text-center py-12 glass-card">
+                                <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-tr from-neon-purple to-neon-blue p-1">
+                                    <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
+                                        <User size={48} className="text-white opacity-50" />
+                                    </div>
+                                </div>
+                                <h2 className="text-display text-2xl truncate px-4">
+                                    {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected'}
+                                </h2>
+                                <p className="text-xs text-neon-yellow font-bold uppercase tracking-widest mt-2">{address ? 'Meme Forger' : 'Connect Wallet'}</p>
+                            </div>
+
+                            <section>
+                                <h3 className="text-title text-lg mb-4 ml-2">My Forged Tokens</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {isLoadingMemes ? (
+                                        <div className="col-span-2 text-center py-8 opacity-50">Loading forge...</div>
+                                    ) : memes.filter(m => m.creator.toLowerCase() === address?.toLowerCase()).length === 0 ? (
+                                        <div className="col-span-2 text-center py-12 glass-card opacity-30 italic">You haven't forged anything yet</div>
+                                    ) : (
+                                        memes.filter(m => m.creator.toLowerCase() === address?.toLowerCase()).map((meme) => (
+                                            <TokenCard
+                                                key={meme.token}
+                                                name={meme.name}
+                                                symbol={meme.symbol}
+                                                curveAddress={meme.curve}
+                                                onClick={() => setSelectedMeme(meme)}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            </section>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
+            {/* ===== BOTTOM NAVIGATION ===== */}
+            <nav className="bottom-nav">
+                <button
+                    className={`nav-item ${activeScreen === 'home' && !selectedMeme ? 'active' : ''}`}
+                    onClick={() => { setActiveScreen('home'); setSelectedMeme(null); }}
+                >
+                    <PlusSquare size={24} />
+                </button>
+                <button
+                    className={`nav-item ${activeScreen === 'gallery' && !selectedMeme ? 'active' : ''}`}
+                    onClick={() => { setActiveScreen('gallery'); setSelectedMeme(null); }}
+                >
+                    <LayoutGrid size={24} />
+                </button>
+                <button
+                    className={`nav-item ${activeScreen === 'profile' && !selectedMeme ? 'active' : ''}`}
+                    onClick={() => { setActiveScreen('profile'); setSelectedMeme(null); }}
+                >
+                    <User size={24} />
+                </button>
+            </nav>
+        </main>
     );
 }

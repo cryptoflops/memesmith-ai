@@ -1,20 +1,61 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+// Free image generation options (no API key required)
+const FREE_MODELS = [
+    'https://stabilityai-stable-diffusion-3-5-large-turbo.hf.space/api/predict',
+    'https://prodia-sdxl-stable-diffusion-xl.hf.space/api/predict',
+];
+
+// Hugging Face Inference API (requires API key) 
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
-const HF_MODEL = 'stabilityai/stable-diffusion-xl-base-1.0';
 
-// Placeholder fallback when API is unavailable
-const PLACEHOLDER_URL = 'https://via.placeholder.com/1024x1024/6366f1/ffffff?text=Meme+Coin+Logo';
+// Generate using Hugging Face Spaces (FREE, no API key)
+async function generateWithHFSpaces(prompt: string): Promise<string> {
+    const enhancedPrompt = `${prompt}, high quality, digital art, vibrant colors, meme coin logo, centered, clean background`;
 
+    // Try Prodia SDXL Space (free)
+    const response = await fetch('https://prodia-sdxl-stable-diffusion-xl.hf.space/run/predict', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            data: [
+                enhancedPrompt,                    // prompt
+                "blurry, low quality, distorted, ugly, text, watermark", // negative
+                "DPM++ 2M Karras",                 // sampler
+                20,                                // steps
+                7,                                 // cfg scale
+                512,                               // width
+                512,                               // height
+                -1,                                // seed
+            ]
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`HF Spaces error: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    // Prodia returns the image URL in data[0]
+    if (result.data && result.data[0]) {
+        return result.data[0];
+    }
+
+    throw new Error('No image URL in response');
+}
+
+// Generate using Hugging Face Inference API (requires API key)
 async function generateWithHuggingFace(prompt: string): Promise<string> {
     if (!HUGGINGFACE_API_KEY) {
         throw new Error('No Hugging Face API key');
     }
 
-    // Enhance the prompt for better results
     const enhancedPrompt = `${prompt}, high quality, digital art, vibrant colors, detailed, professional logo design, centered composition, clean background`;
 
-    const response = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}`, {
+    const response = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0', {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
@@ -24,39 +65,33 @@ async function generateWithHuggingFace(prompt: string): Promise<string> {
             inputs: enhancedPrompt,
             parameters: {
                 negative_prompt: 'blurry, low quality, distorted, ugly, text, watermark',
-                num_inference_steps: 30,
+                num_inference_steps: 25,
                 guidance_scale: 7.5,
             },
         }),
     });
 
     if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Hugging Face error:', errorText);
-
-        // Check if model is loading
-        if (response.status === 503) {
-            throw new Error('Model is loading, please try again in a moment');
-        }
-        throw new Error(`Image generation failed: ${response.status}`);
+        throw new Error(`HF API error: ${response.status}`);
     }
 
-    // Response is the image blob
     const imageBlob = await response.blob();
-
-    // Convert to base64 data URL
     const arrayBuffer = await imageBlob.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString('base64');
-    const mimeType = 'image/png';
 
-    return `data:${mimeType};base64,${base64}`;
+    return `data:image/png;base64,${base64}`;
 }
 
-// Alternative: Use a free API like Pollinations.ai
+// Pollinations.ai - 100% free, no API key
 async function generateWithPollinations(prompt: string): Promise<string> {
-    const enhancedPrompt = encodeURIComponent(`${prompt}, high quality digital art, vibrant colors, professional logo`);
-    // Pollinations.ai is free and doesn't require API key
-    return `https://image.pollinations.ai/prompt/${enhancedPrompt}?width=512&height=512&nologo=true`;
+    const enhancedPrompt = encodeURIComponent(`${prompt}, high quality digital art, vibrant colors, professional meme coin logo, centered`);
+    // Direct URL that redirects to generated image
+    return `https://image.pollinations.ai/prompt/${enhancedPrompt}?width=512&height=512&nologo=true&seed=${Date.now()}`;
+}
+
+// Picsum for development/testing placeholder
+function getPlaceholder(): string {
+    return `https://picsum.photos/seed/${Date.now()}/512/512`;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -71,26 +106,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({ error: 'Prompt is required' });
         }
 
-        // Try Hugging Face first
+        console.log('Generating image for prompt:', prompt);
+
+        // Priority 1: Use Hugging Face API if key is provided
         if (HUGGINGFACE_API_KEY) {
             try {
+                console.log('Trying Hugging Face Inference API...');
                 const imageUrl = await generateWithHuggingFace(prompt);
-                return res.status(200).json({ imageUrl });
-            } catch (hfError: any) {
-                console.error('Hugging Face generation failed:', hfError.message);
+                console.log('HF API success');
+                return res.status(200).json({ imageUrl, source: 'huggingface-api' });
+            } catch (error: any) {
+                console.log('HF API failed:', error.message);
             }
         }
 
-        // Fallback to Pollinations.ai (free, no API key needed)
+        // Priority 2: Try Hugging Face Spaces (free)
         try {
-            const imageUrl = await generateWithPollinations(prompt);
-            return res.status(200).json({ imageUrl });
-        } catch (polError) {
-            console.error('Pollinations generation failed:', polError);
+            console.log('Trying Hugging Face Spaces...');
+            const imageUrl = await generateWithHFSpaces(prompt);
+            console.log('HF Spaces success');
+            return res.status(200).json({ imageUrl, source: 'huggingface-spaces' });
+        } catch (error: any) {
+            console.log('HF Spaces failed:', error.message);
         }
 
-        // Final fallback to placeholder
-        return res.status(200).json({ imageUrl: PLACEHOLDER_URL });
+        // Priority 3: Pollinations.ai (free, reliable)
+        try {
+            console.log('Using Pollinations.ai...');
+            const imageUrl = await generateWithPollinations(prompt);
+            console.log('Pollinations success');
+            return res.status(200).json({ imageUrl, source: 'pollinations' });
+        } catch (error: any) {
+            console.log('Pollinations failed:', error.message);
+        }
+
+        // Final fallback: placeholder
+        console.log('Using placeholder');
+        return res.status(200).json({
+            imageUrl: getPlaceholder(),
+            source: 'placeholder'
+        });
 
     } catch (error: any) {
         console.error('Error in generate-asset:', error);
