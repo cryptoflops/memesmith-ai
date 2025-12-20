@@ -1,7 +1,7 @@
 {
   "accountAssociation": {
     "header": "eyJmaWQiOjEyMzQ1LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4MTIzNDU2Nzg5MGFiY2RlZiJ9",
-    "payload": "eyJkb21haW4iOiJleGFtcGxlLmNvbSJ9",
+    "payload": "eyJkb21haW4iOiJtZW1lc21pdGgtYWkudmVyY2VsLmFwcCJ9",
     "signature": "MHhiYWRjb2Rl..."
   },
   "miniapp": {
@@ -12,14 +12,26 @@
     "splashImageUrl": "https://memesmith-ai.vercel.app/splash.png",
     "splashBackgroundColor": "#000000",
     "webhookUrl": "https://api.neynar.com/f/app/918953c9-d96b-46b4-bade-85ce2785c24c/event",
-    "subtitle": "Forge your social identity into a token",
+    "subtitle": "Forge your Farcaster identity into a personalized meme coin with AI",
     "description": "MemeSmith AI analyzes your Farcaster profile to generate and deploy a unique, personalized meme coin on Celo, Base, Optimism, or Arbitrum.",
     "primaryCategory": "social",
     "tags": [
       "ai",
-      "token",
       "memecoin",
-      "generator"
-    ]
+      "generator",
+      "social",
+      "community"
+    ],
+    "tagline": "Grow, Raid & Rise with Stoke Fire",
+    "buttonTitle": "Open MemeSmith",
+    "ogTitle": "MemeSmith AI – Forge Your Tokens",
+    "ogDescription": "Turn your Farcaster identity into a live crypto asset. Build, deploy, and trade your personal memecoin.",
+    "ogImageUrl": "https://memesmith-ai.vercel.app/splash.png",
+    "screenshotUrls": [
+      "https://memesmith-ai.vercel.app/splash.png"
+    ],
+    "imageUrl": "https://memesmith-ai.vercel.app/splash.png",
+    "heroImageUrl": "https://memesmith-ai.vercel.app/splash.png",
+    "castShareUrl": "https://warpcast.com/~/compose?text=Check+out+my+custom+memecoin+forged+by+MemeSmith+AI!"
   }
 }
