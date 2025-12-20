@@ -12,25 +12,23 @@
     "splashImageUrl": "https://memesmith-ai.vercel.app/splash.png",
     "splashBackgroundColor": "#000000",
     "webhookUrl": "https://api.neynar.com/f/app/918953c9-d96b-46b4-bade-85ce2785c24c/event",
-    "subtitle": "Forge AI Meme Coins",
-    "description": "MemeSmith AI analyzes your Farcaster profile to generate and deploy a unique, personalized meme coin on Celo, Base, Optimism, or Arbitrum.",
+    "subtitle": "Forge AI Memes",
+    "description": "Forge personalized AI meme coins on Celo and Base.",
     "primaryCategory": "social",
     "tags": [
-      "social",
       "ai",
-      "memecoin",
-      "community"
+      "crypto"
     ],
-    "tagline": "Grow Raid and Rise",
-    "buttonTitle": "Open MemeSmith",
-    "ogTitle": "MemeSmith AI",
-    "ogDescription": "Turn your Farcaster identity into a live crypto asset. Build, deploy, and trade your personal memecoin.",
+    "tagline": "Forge and Launch",
+    "buttonTitle": "Open",
+    "ogTitle": "MemeSmith",
+    "ogDescription": "Personalized AI Memecoins",
     "ogImageUrl": "https://memesmith-ai.vercel.app/splash.png",
     "screenshotUrls": [
       "https://memesmith-ai.vercel.app/splash.png"
     ],
     "imageUrl": "https://memesmith-ai.vercel.app/splash.png",
     "heroImageUrl": "https://memesmith-ai.vercel.app/splash.png",
-    "castShareUrl": "https://warpcast.com/~/compose?text=Check+out+my+custom+memecoin+forged+by+MemeSmith+AI!"
+    "castShareUrl": "https://warpcast.com/~/compose?text=MemeSmith"
   }
 }
