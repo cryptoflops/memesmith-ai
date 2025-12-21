@@ -7,7 +7,6 @@ import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
     celo,
-    celoAlfajores,
     base,
     baseSepolia,
     optimism,
@@ -17,7 +16,7 @@ import {
 } from 'wagmi/chains';
 import { ReactNode } from 'react';
 
-// Define Celo Sepolia manually just in case, though v2 might have it
+// Define Celo Sepolia manually just in case
 const celoSepolia = {
     id: 11142220,
     name: 'Celo Sepolia Testnet',
@@ -41,15 +40,11 @@ const celoSepolia = {
 const queryClient = new QueryClient();
 
 // Define chains
-// Define chains
 const chains = [
     celo,
     celoSepolia,
     base,
     baseSepolia,
-    optimism,
-    optimismSepolia,
-    arbitrum,
     optimism,
     optimismSepolia,
     arbitrum,
@@ -61,7 +56,7 @@ const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID || '';
 
 // Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
-    networks: chains,
+    networks: chains as any,
     projectId,
     ssr: true
 });

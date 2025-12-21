@@ -55,31 +55,31 @@ export const TokenDetail: FC<TokenDetailProps> = ({ token, onBack }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="pb-24"
+            className="pb-32 px-6"
         >
-            <header className="flex items-center gap-4 py-6">
+            <header className="flex items-center gap-4 py-8">
                 <button
-                    className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-white/70 hover:text-white"
+                    className="w-10 h-10 rounded-full bg-obsidian-card border border-obsidian-border flex items-center justify-center text-white/70 hover:text-white transition-colors"
                     onClick={onBack}
                 >
                     <ArrowLeft size={20} />
                 </button>
-                <h1 className="text-title text-xl">Forge Detail</h1>
+                <h1 className="text-xl font-heading font-bold uppercase tracking-tight">Forge Detail</h1>
             </header>
 
-            <div className="glass-card overflow-hidden mb-6 relative">
-                <div className="aspect-video bg-white/5 flex items-center justify-center opacity-20">
-                    <Zap size={80} />
+            <div className="bg-obsidian-card border border-obsidian-border rounded-3xl overflow-hidden mb-6 relative shadow-xl">
+                <div className="aspect-video bg-zinc-900 flex items-center justify-center">
+                    <Zap size={80} className="text-zinc-700" />
                 </div>
                 <div className="p-6">
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h2 className="text-display text-3xl mb-1">{token.name}</h2>
-                            <span className="text-neon-yellow font-black tracking-widest text-sm uppercase">${token.symbol}</span>
+                            <h2 className="text-3xl font-heading font-bold mb-1">{token.name}</h2>
+                            <span className="text-secondary font-black tracking-widest text-sm uppercase">${token.symbol}</span>
                         </div>
                         <div className="text-right">
-                            <div className="text-[10px] font-bold opacity-30 uppercase tracking-widest mb-1">Current Price</div>
-                            <div className="text-xl font-display text-neon-blue">
+                            <div className="text-[10px] font-bold opacity-30 uppercase tracking-widest mb-1">Price</div>
+                            <div className="text-xl font-heading font-bold text-primary">
                                 {isLoadingPrice ? '...' : `${Number(price).toFixed(6)} CELO`}
                             </div>
                         </div>
@@ -88,43 +88,43 @@ export const TokenDetail: FC<TokenDetailProps> = ({ token, onBack }) => {
                     <div className="space-y-2">
                         <div className="flex justify-between text-[10px] font-bold tracking-widest uppercase mb-1">
                             <span className="opacity-40">Bonding Progress</span>
-                            <span className="text-neon-green">{progress}%</span>
+                            <span className="text-accent-green">{progress}%</span>
                         </div>
-                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                        <div className="w-full h-3 bg-zinc-900 rounded-full overflow-hidden border border-obsidian-border">
                             <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${progress}%` }}
-                                className="h-full bg-neon-green shadow-green"
+                                className="h-full bg-accent-green shadow-[0_0_12px_rgba(163,230,53,0.3)]"
                                 transition={{ duration: 1, ease: "easeOut" }}
                             />
                         </div>
                     </div>
                 </div>
-                <div className="absolute top-4 right-4 glass-card-sm px-2 py-1 flex items-center gap-1">
-                    <ShieldCheck size={12} className="text-neon-cyan" />
-                    <span className="text-[10px] font-bold text-white/50">VERIFIED</span>
+                <div className="absolute top-4 right-4 bg-obsidian-bg/80 backdrop-blur-md border border-obsidian-border px-2 py-1 rounded-lg flex items-center gap-1">
+                    <ShieldCheck size={12} className="text-primary" />
+                    <span className="text-[10px] font-bold text-white/70">VERIFIED</span>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="glass-card p-4">
+                <div className="bg-obsidian-card border border-obsidian-border rounded-2xl p-4 shadow-md">
                     <div className="text-[10px] font-bold opacity-30 uppercase tracking-widest mb-1 flex items-center gap-2">
                         <Info size={12} /> Supply
                     </div>
-                    <div className="text-xl font-display">{Number(token.initialSupply).toLocaleString()}</div>
+                    <div className="text-xl font-heading font-bold">{Number(token.initialSupply).toLocaleString()}</div>
                 </div>
-                <div className="glass-card p-4">
+                <div className="bg-obsidian-card border border-obsidian-border rounded-2xl p-4 shadow-md">
                     <div className="text-[10px] font-bold opacity-30 uppercase tracking-widest mb-1 flex items-center gap-2">
                         <TrendingUp size={12} /> Reserved
                     </div>
-                    <div className="text-xl font-display text-neon-purple">{Number(token.curveSupply).toLocaleString()}</div>
+                    <div className="text-xl font-heading font-bold text-vibe-purple">{Number(token.curveSupply).toLocaleString()}</div>
                 </div>
             </div>
 
-            <div className="glass-card p-6 relative overflow-hidden">
-                <div className="shimmer-container" />
-                <h3 className="text-title mb-6 flex items-center gap-2">
-                    <Rocket size={20} className="text-neon-yellow" /> Launch Buy
+            <div className="bg-obsidian-card border border-obsidian-border rounded-3xl p-6 relative overflow-hidden shadow-xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                <h3 className="text-lg font-heading font-bold mb-6 flex items-center gap-2 uppercase tracking-tight">
+                    <Rocket size={20} className="text-secondary" /> Launch Buy
                 </h3>
 
                 <div className="space-y-6">
@@ -135,7 +135,7 @@ export const TokenDetail: FC<TokenDetailProps> = ({ token, onBack }) => {
                                 type="number"
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 p-4 rounded-xl font-display text-2xl focus:outline-none focus:border-neon-yellow/50 transition-colors"
+                                className="w-full bg-zinc-900 border border-obsidian-border p-4 rounded-xl font-heading font-bold text-2xl focus:outline-none focus:border-primary/50 transition-colors"
                             />
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold opacity-30">
                                 {token.symbol}
@@ -143,9 +143,9 @@ export const TokenDetail: FC<TokenDetailProps> = ({ token, onBack }) => {
                         </div>
                     </div>
 
-                    <div className="flex justify-between items-center p-4 glass-card-sm">
+                    <div className="flex justify-between items-center p-4 bg-obsidian-highlight/30 rounded-xl border border-obsidian-border">
                         <span className="text-xs font-bold opacity-40 uppercase tracking-widest">Est. Cost</span>
-                        <span className="text-lg font-display text-neon-green">
+                        <span className="text-lg font-heading font-bold text-accent-green">
                             {(Number(price) * Number(amount)).toFixed(6)} CELO
                         </span>
                     </div>
@@ -153,7 +153,7 @@ export const TokenDetail: FC<TokenDetailProps> = ({ token, onBack }) => {
                     <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="w-full py-4 rounded-xl bg-neon-yellow text-black font-black text-lg shadow-yellow uppercase tracking-widest"
+                        className="w-full py-5 rounded-xl bg-primary text-white font-heading font-bold text-lg shadow-lg shadow-primary/20 uppercase tracking-widest"
                         onClick={handleBuy}
                         disabled={isDeploying || isWaiting}
                     >
@@ -168,7 +168,7 @@ export const TokenDetail: FC<TokenDetailProps> = ({ token, onBack }) => {
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="text-center text-neon-green text-sm font-bold uppercase tracking-widest mt-4"
+                            className="text-center text-accent-green text-sm font-bold uppercase tracking-widest mt-4"
                         >
                             Order Fulfilled Successfully! 🎉
                         </motion.div>
