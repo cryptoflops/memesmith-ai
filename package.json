@@ -1,24 +1,22 @@
 {
-  "name": "memesmith-frontend",
+  "name": "memesmith-root",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd frontend && npm run start",
+    "lint": "cd frontend && npm run lint"
   },
   "dependencies": {
-    "@rainbow-me/rainbowkit": "^1.3.0",
-    "next": "^14.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "viem": "^1.20.0",
-    "wagmi": "^1.4.5"
+    "next": "16.1.0",
+    "react": "19.0.1",
+    "react-dom": "19.0.1"
   },
   "devDependencies": {
-    "@types/node": "24.10.0",
-    "@types/react": "18.3.26",
-    "typescript": "5.9.3"
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.1",
+    "typescript": "^5.0.0"
   }
 }
